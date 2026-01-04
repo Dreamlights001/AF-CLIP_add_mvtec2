@@ -3,3 +3,5 @@ __pycache__
 send_message.py
 .ipynb*
 test_mvtec2.py
+
+weight
