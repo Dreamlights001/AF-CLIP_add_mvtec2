@@ -17,6 +17,7 @@ class DAGMDataset(Dataset):
         self.gt_target_transform = gt_target_transform
         print("self.category: ", self.category)
         self.preprocess()  
+        self.update(self.category)
         self.dataset_name = 'DAGM'
       
     def preprocess(self):
