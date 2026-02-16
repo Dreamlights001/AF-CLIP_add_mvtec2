@@ -39,15 +39,21 @@ class ClinicDBDataset(Dataset):
         gt_path = self.gt_paths[idx]
         label = self.labels[idx]
         img = Image.open(img_path).convert('RGB')
+        
         if gt_path is not None:
             gt = np.array(Image.open(gt_path))
+            # 确保掩码是二值的：非0值都设为255
+            gt = (gt > 0) * 255
         else:
             gt = np.zeros((img.size[1], img.size[0]), dtype=np.uint8)
-        gt = Image.fromarray(gt)
+        
+        gt = Image.fromarray(gt.astype(np.uint8))
+        
         if self.transform is not None:
             img = self.transform(img)
         if self.gt_target_transform is not None:
             gt = self.gt_target_transform(gt)
+            
         return img, label, gt, category, img_path
     
     

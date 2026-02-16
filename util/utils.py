@@ -154,7 +154,24 @@ def compute_pro(masks: ndarray, amaps: ndarray, num_th: int = 200) -> None:
     assert amaps.ndim == 3, "amaps.ndim must be 3 (num_test_data, h, w)"
     assert masks.ndim == 3, "masks.ndim must be 3 (num_test_data, h, w)"
     assert amaps.shape == masks.shape, "amaps.shape and masks.shape must be same"
-    assert set(masks.flatten()) == {0, 1}, "set(masks.flatten()) must be {0, 1}"
+    # 检查掩码值并进行适当处理
+    unique_mask_values = set(masks.flatten())
+    
+    # 处理全0掩码的情况（如DTD纹理数据集）
+    if unique_mask_values == {0}:
+        # 全0掩码，对于PRO计算直接返回0
+        return 0.0
+    
+    # 处理二值掩码
+    if unique_mask_values == {0, 1}:
+        # 标准二值掩码，无需转换
+        pass
+    elif unique_mask_values == {0, 255}:
+        # 0/255格式的掩码，转换为0/1
+        masks = (masks / 255).astype(np.uint8)
+    else:
+        # 其他情况：将非0值转为1（兼容各种掩码格式）
+        masks = (masks > 0).astype(np.uint8)
     assert isinstance(num_th, int), "type(num_th) must be int"
 
     df = pd.DataFrame([], columns=["pro", "fpr", "threshold"])

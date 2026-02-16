@@ -116,27 +116,29 @@ def train(args):
     test_dataset_isic = ISICDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
     test_dataset_clinic = ClinicDBDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
     test_dataset_colon = ColonDBDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_visa = VisaDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_btad = BTADDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
+    # test_dataset_visa = VisaDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
+    # test_dataset_btad = BTADDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
     test_dataset_dtd = DTDDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_brainmri = BrainMRIDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_br35h = Br35HDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_dagm = DAGMDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_kvasir = KvasirDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
-    test_dataset_mvtec2 = MVTec2Dataset(root=args.data_dir, train=False, category=None,transform=clip_transform,gt_target_transform=target_transform)
+    #test_dataset_brainmri = BrainMRIDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
+    #test_dataset_br35h = Br35HDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
+    # test_dataset_dagm = DAGMDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
+    # test_dataset_kvasir = KvasirDataset(root=args.data_dir, train=False, category=None,transform=clip_transform, gt_target_transform=target_transform)
+    #test_dataset_mvtec2 = MVTec2Dataset(root=args.data_dir, train=False, category=None,transform=clip_transform,gt_target_transform=target_transform)
+    #test_dataset_mpdd = MPDDDataset(root=args.data_dir, train=False, category=None,transform=clip_transform,gt_target_transform=target_transform)
     all_test_dataset_dict = {
-        "mvtec": test_dataset_mvtec,
-        "visa": test_dataset_visa,
-        "btad": test_dataset_btad,
+        # "mvtec": test_dataset_mvtec,
+        # "visa": test_dataset_visa,
+        #"btad": test_dataset_btad,
         "dtd": test_dataset_dtd,
-        'dagm': test_dataset_dagm,
+        # 'dagm': test_dataset_dagm,
         "isic": test_dataset_isic,
         "clinic": test_dataset_clinic,
         "colon": test_dataset_colon,
-        "brainmri": test_dataset_brainmri,
-        "br35h": test_dataset_br35h,
-        'kvasir': test_dataset_kvasir,
-        "mvtec2": test_dataset_mvtec2,
+        # "brainmri": test_dataset_brainmri,
+        # "br35h": test_dataset_br35h,
+        # 'kvasir': test_dataset_kvasir,
+        # "mvtec2": test_dataset_mvtec2,
+        # "mpdd": test_dataset_mpdd,
     }
     if len(args.test_dataset) < 1:
         test_dataset_dict = all_test_dataset_dict
@@ -146,17 +148,29 @@ def train(args):
             test_dataset_dict[ds_name] = all_test_dataset_dict[ds_name]
     if args.dataset in test_dataset_dict:
         del test_dataset_dict[args.dataset]
+    # 注释掉原始的训练数据集选择逻辑，因为mvtec和visa已被注释
     if args.dataset == 'mvtec':
         train_dataset = test_dataset_mvtec
     else:
         train_dataset = test_dataset_visa
+    
+    # 使用DTD作为默认训练数据集（因为它是第一个可用的数据集）
+    #train_dataset = test_dataset_dtd
         
     
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     
     if args.weight is not None:
-        clip_model.state_prompt_embedding = torch.load(os.path.join(args.weight, "{}_prompt.pt".format(args.dataset)))
-        clip_model.adaptor = torch.load(os.path.join(args.weight, "{}_adaptor.pt".format(args.dataset)))
+        # 兼容不同PyTorch版本的权重加载
+        try:
+            # PyTorch 2.6+ 推荐方式
+            with torch.serialization.safe_globals():
+                clip_model.state_prompt_embedding = torch.load(os.path.join(args.weight, "{}_prompt.pt".format(args.dataset)))
+                clip_model.adaptor = torch.load(os.path.join(args.weight, "{}_adaptor.pt".format(args.dataset)))
+        except TypeError:
+            # 兼容旧版本PyTorch
+            clip_model.state_prompt_embedding = torch.load(os.path.join(args.weight, "{}_prompt.pt".format(args.dataset)), weights_only=False)
+            clip_model.adaptor = torch.load(os.path.join(args.weight, "{}_adaptor.pt".format(args.dataset)), weights_only=False)
     else:
         optimizer = torch.optim.Adam(clip_model.get_trainable_parameters(), lr=args.lr, betas=(0.5, 0.999))
        
@@ -191,7 +205,7 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Pytorch implemention of AF-CLIP')
     
-    parser.add_argument('--clip_download_dir', type=str, default='./download/clip/', help='training dataset')
+    parser.add_argument('--clip_download_dir', type=str, default='/home/wang/checkpoints/AF-CLIP', help='training dataset')
     
     parser.add_argument('--data_dir', type=str, default='./data', help='training dataset')
     
@@ -213,7 +227,7 @@ if __name__ == '__main__':
     
     parser.add_argument('--fewshot', type=int, default=0, help='few shot num')
     
-    parser.add_argument('--seed', type=int, default=122, help='seed')
+    parser.add_argument('--seed', type=int, default=42, help='seed')
     
     parser.add_argument('--log_dir', type=str, default='./log/', help='log dir')
     

@@ -10,7 +10,7 @@ class ISICDataset(Dataset):
     def __init__(self, root, train=True, category=None, transform=None, gt_target_transform=None):
         super(ISICDataset, self).__init__()
         self.train = train
-        self.root = os.path.join(root, 'ISIC2016')
+        self.root = os.path.join(root, 'ISBI2016')
         self.transform = transform
         self.gt_target_transform = gt_target_transform
         self.preprocess()  

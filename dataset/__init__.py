@@ -9,5 +9,6 @@ from dataset.colondb import ColonDBDataset
 from dataset.br35h import Br35HDataset
 from dataset.brainMRI import BrainMRIDataset
 from dataset.dagm import DAGMDataset
-from dataset.kvasir import KvasirDataset
+# from dataset.kvasir import KvasirDataset
 from dataset.mvtec2 import MVTec2Dataset
+from dataset.mpdd import MPDDDataset
